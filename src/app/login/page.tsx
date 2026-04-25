@@ -19,14 +19,18 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-white px-6">
-      <section className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-3xl font-semibold tracking-tight">Dubu test</h1>
+    <main className="flex min-h-dvh items-center justify-center bg-slate-50 px-6 py-10">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-[0_16px_48px_-24px_rgba(15,23,42,0.35)] sm:p-9">
+        <div className="mb-8 text-center">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Dubu test</h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-500">안녕하세요 진동현입니다.</p>
+        </div>
+
         <button
           type="button"
           onClick={onGoogleLogin}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-[#dadce0] bg-white px-4 py-3 text-sm font-medium text-[#3c4043] shadow-sm transition hover:bg-[#f8f9fa] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#dadce0] bg-white px-4 text-[15px] font-medium text-[#3c4043] shadow-sm transition hover:bg-[#f8f9fa] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
             <path
@@ -46,7 +50,7 @@ export default function LoginPage() {
               d="M43.611 20.083H42V20H24v8h11.303a12.03 12.03 0 0 1-4.084 5.569l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
             />
           </svg>
-          <span>{isLoading ? "로그인 중..." : "Google 계정으로 로그인"}</span>
+          <span>{isLoading ? "로그인 중..." : "Google로 계속하기"}</span>
         </button>
       </section>
     </main>
