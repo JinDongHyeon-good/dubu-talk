@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request });
+  const pathname = request.nextUrl.pathname;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -24,19 +25,18 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  if (request.nextUrl.pathname === "/login") {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (user) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  const isProtectedPath = pathname === "/" || pathname.startsWith("/chat/");
+  if (isProtectedPath && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/login"],
+  matcher: ["/", "/chat/:path*"],
 };
