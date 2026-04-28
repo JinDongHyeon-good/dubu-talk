@@ -12,6 +12,7 @@ export default function HomePage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [hasFirstQuestion, setHasFirstQuestion] = useState(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
+  const [isSphereReady, setIsSphereReady] = useState(false);
   const [optimisticRoom, setOptimisticRoom] = useState<{ roomId: string; question: string } | null>(null);
   const [hasAnyRoom, setHasAnyRoom] = useState(false);
 
@@ -75,7 +76,11 @@ export default function HomePage() {
   }
 
   return (
-    <main className="space-bg relative flex min-h-dvh items-center justify-center overflow-hidden px-6 py-16">
+    <main
+      className={`space-bg relative flex min-h-dvh items-center justify-center overflow-hidden px-6 py-16 ${
+        isSphereReady ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
       <div className="space-nebula space-nebula-a" />
       <div className="space-nebula space-nebula-b" />
       <div className="space-nebula space-nebula-c" />
@@ -85,15 +90,15 @@ export default function HomePage() {
       <div className="space-glow" />
 
       <section className="sphere-cloud-wrap relative z-10" aria-label="3D sphere">
-        <SpaceSphere />
+        <SpaceSphere onReady={() => setIsSphereReady(true)} />
         <div
           className={`transition-all duration-500 ease-out ${
             hasFirstQuestion ? "pointer-events-none -translate-y-2 opacity-0" : "translate-y-0 opacity-100"
           }`}
         >
           <PersonaBubble
-            onFirstQuestion={({ roomId, question }) => {
-              setOptimisticRoom({ roomId, question });
+            onStartChat={(roomId) => {
+              setOptimisticRoom({ roomId, question: "실시간 대화 시작" });
               setHasFirstQuestion(true);
             }}
           />

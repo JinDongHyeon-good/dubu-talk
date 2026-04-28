@@ -57,7 +57,11 @@ function createWovenRingPositions(
   return positions;
 }
 
-export default function SpaceSphere() {
+type SpaceSphereProps = {
+  onReady?: () => void;
+};
+
+export default function SpaceSphere({ onReady }: SpaceSphereProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -157,6 +161,7 @@ export default function SpaceSphere() {
     const startedAt = performance.now();
     renderer.render(scene, camera);
     mount.style.visibility = "visible";
+    onReady?.();
     const animate = () => {
       frame = requestAnimationFrame(animate);
       const elapsed = (performance.now() - startedAt) / 1000;
