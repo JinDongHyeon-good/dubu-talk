@@ -1,35 +1,11 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-type SpeechRecognitionResultEvent = Event & {
-  results: {
-    [key: number]: {
-      [key: number]: {
-        transcript: string;
-      };
-    };
-    length: number;
-  };
-};
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  start: () => void;
-  stop: () => void;
-  onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
-  onerror: ((event: Event & { error?: string }) => void) | null;
-  onend: (() => void) | null;
-};
-
-type SpeechWindow = Window & {
-  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-  SpeechRecognition?: new () => SpeechRecognitionLike;
-};
+import { GeminiLiveClient } from "@/lib/live/gemini-live-client";
+import { nextLiveState } from "@/lib/live/live-state-machine";
+import type { LiveState, LiveTranscriptItem } from "@/types/live";
 
 type ChatHistoryItem = {
   id: string;
@@ -41,7 +17,82 @@ type ChatHistoryItem = {
 
 type ChatSidebarProps = {
   roomId: string;
+  onConversationActiveChange?: (active: boolean) => void;
 };
+
+function StreamingText({
+  text,
+  animate,
+}: {
+  text: string;
+  animate: boolean;
+}) {
+  const [displayed, setDisplayed] = useState(animate ? "" : text);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayed(text);
+      return;
+    }
+
+    let cancelled = false;
+    const target = text;
+    const tickMs = 18;
+
+    const timer = window.setInterval(() => {
+      if (cancelled) return;
+      setDisplayed((prev) => {
+        if (target.length <= prev.length) return prev;
+        const nextLength = Math.min(target.length, prev.length + 1);
+        return target.slice(0, nextLength);
+      });
+    }, tickMs);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [animate, text]);
+
+  return <>{displayed}</>;
+}
+
+function mergeChunkText(previous: string, incoming: string) {
+  const prev = previous.trim();
+  const next = incoming.trim();
+  if (!prev) return next;
+  if (!next) return prev;
+  if (next.startsWith(prev)) return next;
+  if (prev.startsWith(next)) return prev;
+
+  const maxOverlap = Math.min(prev.length, next.length);
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    if (prev.slice(-overlap) === next.slice(0, overlap)) {
+      return `${prev}${next.slice(overlap)}`;
+    }
+  }
+  return `${prev} ${next}`;
+}
+
+function isMostlyKoreanText(text: string) {
+  const normalized = text.trim();
+  if (!normalized) return true;
+
+  const hangulMatches = normalized.match(/[가-힣]/g) ?? [];
+  const latinMatches = normalized.match(/[A-Za-z]/g) ?? [];
+  const hangulCount = hangulMatches.length;
+  const latinCount = latinMatches.length;
+
+  if (hangulCount === 0 && latinCount > 0) return false;
+  return hangulCount >= latinCount;
+}
+
+function enforceKoreanAnswer(text: string) {
+  const normalized = text.trim();
+  if (!normalized) return normalized;
+  if (isMostlyKoreanText(normalized)) return normalized;
+  return "죄송해요. 방금 응답 언어가 올바르지 않았어요. 같은 질문에 대해 한국어로 다시 답변할게요.";
+}
 
 function renderSimpleMarkdown(text: string) {
   const lines = text.split("\n");
@@ -77,44 +128,30 @@ function renderSimpleMarkdown(text: string) {
   });
 }
 
-export default function ChatSidebar({ roomId }: ChatSidebarProps) {
+export default function ChatSidebar({ roomId, onConversationActiveChange }: ChatSidebarProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [liveState, setLiveState] = useState<LiveState>("idle");
+  const [liveLogs, setLiveLogs] = useState<LiveTranscriptItem[]>([]);
   const [items, setItems] = useState<ChatHistoryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const playingAudioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const liveClientRef = useRef<GeminiLiveClient | null>(null);
+  const hasDispatchedOptimisticRef = useRef(false);
+  const latestUserDraftRef = useRef("");
+  const latestAssistantDraftRef = useRef("");
+  const [isAssistantSpeaking] = useState(false);
 
-  const speakWithBrowserTts = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "ko-KR";
-    utterance.rate = 0.95;
-    utterance.pitch = 0.75;
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice =
-      voices.find((voice) => {
-        const name = voice.name.toLowerCase();
-        const lang = voice.lang.toLowerCase();
-        return (
-          (lang.includes("ko") || lang.includes("kr")) &&
-          (name.includes("male") || name.includes("man") || name.includes("남"))
-        );
-      }) ??
-      voices.find((voice) => {
-        const lang = voice.lang.toLowerCase();
-        return lang.includes("ko") || lang.includes("kr");
-      });
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    return true;
-  };
+  const isListening = liveState === "listening" || liveState === "connecting";
+  const isSpeaking = liveState === "responding" || isAssistantSpeaking;
+  const isConversationActive = isListening || isSpeaking;
+  const stateLabel = useMemo(() => {
+    if (liveState === "connecting") return "연결 중";
+    if (liveState === "listening") return "듣는 중";
+    if (liveState === "responding") return "응답 중";
+    if (liveState === "error") return "오류";
+    return "대기";
+  }, [liveState]);
 
   const fetchHistory = useCallback(async () => {
     setIsHistoryLoading(true);
@@ -128,6 +165,8 @@ export default function ChatSidebar({ roomId }: ChatSidebarProps) {
     }
   }, [roomId]);
 
+  const stopAssistantAudio = useCallback(() => undefined, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchHistory();
@@ -137,113 +176,134 @@ export default function ChatSidebar({ roomId }: ChatSidebarProps) {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [items, isOpen]);
+  }, [items, liveLogs, isOpen]);
 
   useEffect(() => {
-    return () => {
-      recognitionRef.current?.stop();
-    };
-  }, []);
+    onConversationActiveChange?.(isConversationActive);
+  }, [isConversationActive, onConversationActiveChange]);
 
-  const requestVoiceAnswer = async (question: string) => {
-    toast.loading("답변을 생성하고 있습니다.", { id: "voice-answer" });
-    const response = await fetch("/api/voice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, roomId }),
-    });
-    if (!response.ok) {
-      const errorBody = (await response.json().catch(() => null)) as { detail?: string; error?: string } | null;
-      toast.dismiss("voice-answer");
-      toast.error(errorBody?.detail || errorBody?.error || "답변 생성에 실패했습니다.");
-      setIsListening(false);
-      return;
-    }
-    const data = (await response.json()) as { answer?: string; audioBase64?: string; mimeType?: string };
-    toast.dismiss("voice-answer");
-    await fetchHistory();
-    window.dispatchEvent(new Event("chat-room-refresh"));
-    if (data.audioBase64 && data.mimeType) {
-      try {
-        const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-        playingAudioRef.current = audio;
-        setIsSpeaking(true);
-        audio.onended = () => {
-          setIsSpeaking(false);
-          playingAudioRef.current = null;
-        };
-        await audio.play();
-      } catch {
-        if (data.answer) {
-          setIsSpeaking(true);
-          speakWithBrowserTts(data.answer);
+  useEffect(() => {
+    liveClientRef.current = new GeminiLiveClient({
+      onStateChange: (state) => setLiveState(state),
+      onTranscript: (item) => {
+        if (item.role === "user" && item.text && !hasDispatchedOptimisticRef.current) {
+          hasDispatchedOptimisticRef.current = true;
+          window.dispatchEvent(
+            new CustomEvent<{ roomId: string; question: string }>("chat-room-optimistic", {
+              detail: { roomId, question: item.text },
+            })
+          );
         }
-      }
-    }
-    if (!data.audioBase64 || !data.mimeType) {
-      setIsSpeaking(false);
-    }
-    setIsListening(false);
-  };
+        if (item.role === "user" && item.text) {
+          latestUserDraftRef.current = mergeChunkText(latestUserDraftRef.current, item.text);
+        }
+        if (item.role === "assistant" && item.text) {
+          latestAssistantDraftRef.current = mergeChunkText(latestAssistantDraftRef.current, item.text);
+        }
+        setLiveLogs((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last && !last.isFinal && last.role === item.role) {
+            const mergedText = mergeChunkText(last.text, item.text);
+            next[next.length - 1] = {
+              ...item,
+              text: mergedText,
+              id: last.id,
+            };
+            return next;
+          }
+          return [...next, item];
+        });
+      },
+      onTurnComplete: async ({ userText, assistantText: _assistantText }) => {
+        hasDispatchedOptimisticRef.current = false;
+        const finalQuestion = mergeChunkText(latestUserDraftRef.current, userText || "").trim();
+        const mergedFinalAnswer = mergeChunkText(latestAssistantDraftRef.current, _assistantText || "").trim();
+        const finalAnswer = enforceKoreanAnswer(mergedFinalAnswer);
+        if (!finalQuestion || !finalAnswer) {
+          return;
+        }
+        try {
+          await fetch("/api/live/turns", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId, question: finalQuestion, answer: finalAnswer }),
+          });
+          setLiveLogs((prev) => {
+            const finalized = prev.map((log) => (log.isFinal ? log : { ...log, isFinal: true }));
+            const hasFinalUser = finalized.some((log) => log.role === "user" && log.isFinal && log.text === finalQuestion);
+            const hasFinalAssistant = finalized.some(
+              (log) => log.role === "assistant" && log.isFinal && log.text === finalAnswer
+            );
+            const appended = [...finalized];
+            if (!hasFinalUser) {
+              appended.push({
+                id: `user-final-${Date.now()}`,
+                role: "user",
+                text: finalQuestion,
+                isFinal: true,
+                createdAt: Date.now(),
+              });
+            }
+            if (!hasFinalAssistant) {
+              appended.push({
+                id: `assistant-final-${Date.now()}`,
+                role: "assistant",
+                text: finalAnswer,
+                isFinal: true,
+                createdAt: Date.now(),
+              });
+            }
+            return appended;
+          });
+          latestUserDraftRef.current = "";
+          latestAssistantDraftRef.current = "";
+          window.dispatchEvent(new Event("chat-room-refresh"));
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "live-turn-save-error");
+        }
+      },
+      onError: (message) => {
+        toast.error(message);
+      },
+    });
+
+    return () => {
+      stopAssistantAudio();
+      void liveClientRef.current?.disconnect();
+      liveClientRef.current = null;
+    };
+  }, [fetchHistory, roomId, stopAssistantAudio]);
 
   const onStopSpeaking = () => {
-    if (playingAudioRef.current) {
-      playingAudioRef.current.pause();
-      playingAudioRef.current.currentTime = 0;
-      playingAudioRef.current = null;
-    }
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
+    stopAssistantAudio();
+  };
+
+  const onStopLiveConversation = async () => {
+    stopAssistantAudio();
+    await liveClientRef.current?.disconnect();
   };
 
   const onAskByVoice = async () => {
-    onStopSpeaking();
-    if (typeof window === "undefined") return;
-    const speechWindow = window as SpeechWindow;
-    const Recognition = speechWindow.webkitSpeechRecognition || speechWindow.SpeechRecognition;
-    if (!Recognition) {
-      toast.error("현재 브라우저에서는 마이크 질문을 지원하지 않습니다.");
+    if (!liveClientRef.current) return;
+
+    if (liveState === "idle" || liveState === "error") {
+      try {
+        toast.message("실시간 연결을 시작합니다.", { id: "live-connect" });
+        setLiveState(nextLiveState(liveState, "CONNECT_REQUEST"));
+        await liveClientRef.current.connect();
+        toast.dismiss("live-connect");
+        toast.success("실시간 연결이 시작되었습니다.", { id: "live-connect-ok" });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "live-connect-failed";
+        toast.dismiss("live-connect");
+        toast.error(`실시간 연결 실패: ${errorMessage}`);
+        setLiveState("error");
+      }
       return;
     }
-    try {
-      setIsListening(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => track.stop());
-      const recognition = new Recognition();
-      recognitionRef.current = recognition;
-      recognition.lang = "ko-KR";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.onresult = (event) => {
-        const last = event.results[event.results.length - 1];
-        const transcript = last?.[0]?.transcript?.trim() ?? "";
-        if (transcript) {
-          window.dispatchEvent(
-            new CustomEvent<{ roomId: string; question: string }>("chat-room-optimistic", {
-              detail: { roomId, question: transcript },
-            })
-          );
-          recognition.stop();
-          void requestVoiceAnswer(transcript);
-        } else {
-          setIsListening(false);
-          toast.error("음성이 인식되지 않았습니다.");
-        }
-      };
-      recognition.onerror = () => {
-        setIsListening(false);
-        toast.error("마이크 입력 중 오류가 발생했습니다.");
-      };
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-      recognition.start();
-    } catch {
-      setIsListening(false);
-      toast.error("마이크 권한이 거부되었거나 시작할 수 없습니다.");
-    }
+
+    await liveClientRef.current.disconnect();
   };
 
   const onRestartConversation = () => {
@@ -258,14 +318,25 @@ export default function ChatSidebar({ roomId }: ChatSidebarProps) {
   return (
     <>
       <div className="pointer-events-auto absolute left-1/2 top-1/2 z-40 -translate-x-1/2 translate-y-[250px]">
+        <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onAskByVoice}
-          disabled={isListening}
+          disabled={isConversationActive}
           className="inline-flex h-11 items-center justify-center rounded-xl bg-cyan-300/90 px-5 text-sm font-semibold text-slate-950 shadow-[0_14px_32px_-18px_rgba(0,0,0,0.75)] transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-55"
         >
-          {isListening ? "듣는 중..." : "질문하기"}
+          {isConversationActive ? "소통 중..." : "질문하기"}
         </button>
+        {isConversationActive ? (
+          <button
+            type="button"
+            onClick={onStopLiveConversation}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-rose-300/35 bg-rose-500/20 px-5 text-sm font-semibold text-rose-100 shadow-[0_14px_32px_-18px_rgba(0,0,0,0.75)] transition hover:bg-rose-500/30"
+          >
+            대화 그만하기
+          </button>
+        ) : null}
+        </div>
       </div>
 
       <div className="absolute bottom-4 right-4 top-20 z-20 hidden md:block">
@@ -316,15 +387,34 @@ export default function ChatSidebar({ roomId }: ChatSidebarProps) {
                   </div>
                 ))
               : null}
-            {!isHistoryLoading && items.length === 0 ? (
+            {liveLogs.map((log) => (
+              <div key={log.id} className="flex justify-start">
+                <div
+                  className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                    log.role === "user"
+                      ? "ml-auto rounded-br-md bg-cyan-400/20 text-cyan-50"
+                      : "rounded-bl-md bg-emerald-500/15 text-emerald-100"
+                  } ${log.isFinal ? "" : "opacity-70"}`}
+                >
+                  <StreamingText text={log.text} animate={log.role === "assistant"} />
+                </div>
+              </div>
+            ))}
+            {!isHistoryLoading && items.length === 0 && liveLogs.length === 0 && liveState === "idle" ? (
               <p className="text-xs leading-relaxed text-slate-400">
-                아직 대화 내역이 없습니다. 아래 `질문하기` 버튼으로 바로 질문할 수 있습니다.
+                아직 대화 내역이 없습니다.
+                <br />
+                아래 `질문하기` 버튼으로 바로 질문할 수 있습니다.
               </p>
             ) : null}
           </div>
         </div>
 
         <div className="border-t border-white/10 p-3">
+          <div className="mb-2 flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200">
+            <span>Live 상태</span>
+            <span className={liveState === "error" ? "text-rose-300" : "text-emerald-300"}>{stateLabel}</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -345,10 +435,10 @@ export default function ChatSidebar({ roomId }: ChatSidebarProps) {
             <button
               type="button"
               onClick={onAskByVoice}
-              disabled={isListening}
+              disabled={liveState === "connecting"}
               className="h-10 flex-1 rounded-lg bg-cyan-300/85 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-55"
             >
-              {isListening ? "듣는 중..." : "질문하기"}
+              {isConversationActive ? "대화 종료" : "실시간 대화 시작"}
             </button>
             {isSpeaking ? (
               <button
