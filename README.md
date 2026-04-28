@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## 프로젝트 실행방법
 
-First, run the development server:
-
+1. 의존성 설치
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. 개발 서버 실행
+```bash
+pnpm dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. 브라우저 접속
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+.env.local 파일은 메일에 참조하여 회신하였습니다.
 
-## Learn More
+## 주요 기술 스택
 
-To learn more about Next.js, take a look at the following resources:
+- **언어: TypeScript**
+  - 정적 타입 기반으로 런타임 오류를 줄이고, API/상태/컴포넌트 간 계약을 명확하게 유지하기 위해 선택했습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **프레임워크: Next.js (App Router) + React**
+  - 서버/클라이언트 컴포넌트 구조를 활용해 페이지 성능과 개발 생산성을 함께 확보하고, API Route와 UI를 단일 코드베이스에서 빠르게 운영하기 위해 선택했습니다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **실시간 AI 통신: Gemini Live API (WebSocket)**
+  - 실시간 대화 경험을 구현하기 위해 선택했습니다.
 
-## Deploy on Vercel
+- **오디오 처리: Web Audio API (AudioWorklet)**
+  - 마이크 입력/출력 오디오를 메인 스레드 부담 없이 안정적으로 처리하고, 실시간 음성 품질을 개선하기 위해 선택했습니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **인증/데이터: Supabase (`@supabase/supabase-js`, `@supabase/ssr`)**
+  - 인증, 세션 관리, DB 모델링 및 데이터 저장 구조 설계를 빠르게 구축하고 Next.js SSR 환경과 자연스럽게 연동하기 위해 선택했습니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **UI 스타일링: Tailwind CSS**
+  - 컴포넌트 단위로 빠르게 스타일을 적용하고, 디자인 변경 요청에 민첩하게 대응하기 위해 선택했습니다.
+
+- **3D 시각화: Three.js**
+  - 인터랙티브한 스피어(구체) 연출과 커스텀 애니메이션을 구현하기 위해 선택했습니다.
+
+
+## 구현 범위
+
+### 1) 구글 로그인 + 세션 관리
+
+- **구현 범위**
+  - Supabase Auth 기반으로 구글 로그인을 연동했습니다.
+  - 로그인 이후 세션을 기준으로 사용자 인증 상태를 유지하고, 헤더 메뉴에서 로그아웃 시 세션을 정리한 뒤 로그인 페이지로 이동하도록 구성했습니다.
+  - 인증이 필요한 화면(예: 메인/채팅 화면)에서 비인증 사용자는 로그인 화면으로 유도하는 보호 흐름을 적용했습니다.
+
+### 2) 채팅방 별 실시간 채팅 기능
+
+- **구현 범위**
+  - 채팅방 단위로 실시간 음성 대화를 처리하도록 구성했습니다.
+  - Gemini Live(WebSocket)와 오디오 파이프라인(AudioWorklet)을 사용해 사용자 음성 입력과 AI 응답을 실시간으로 송수신합니다.
+  - 대화 중 생성되는 사용자/어시스턴트 텍스트를 채팅 사이드바에 누적 표시하고, 턴 완료 시 채팅 이력을 채팅방 기준으로 저장합니다.
+  - 대화 상태(연결 중/듣는 중/응답 중)를 UI에 반영해 현재 실시간 통신 상태를 확인할 수 있습니다.
+
+## 설계/구현 중 중점을 둔 포인트
+
+### 1) UI/UX 사용성 중심 설계
+
+- 사용성을 높이기 위한 유저 플로우와 기획을 많이 고려해, 사용자가 최소한의 행동으로 핵심 기능에 도달할 수 있도록 설계했습니다.
+- 이벤트가 발생했을 때 사용자가 현재 상태를 즉시 이해할 수 있도록 인터랙션 피드백(연결 상태, 버튼 상태, 대화 진행 상태)을 설계에 중점을 두었습니다.
+- 컴포넌트 렌더링 시 초기 깜빡임/체감 지연을 줄이기 위해 렌더링 타이밍과 표시 조건을 분리해, 사용자가 흐름이 끊기지 않도록 구성했습니다.
+- 채팅 UI는 "질문 → 응답"이 자연스럽게 누적되는 경험에 집중해, 실시간 텍스트 반영과 스크롤 동작을 사용성 관점에서 다듬었습니다.
+
+### 2) 실시간 소통 인터페이스와 응답 처리 안정성
+
+- 실시간 음성 대화에서 중요한 포인트를 지연 시간과 안정성으로 보고, WebSocket 기반 Live 통신 + AudioWorklet 기반 오디오 처리 구조를 선택했습니다.
+- 단순 응답 출력이 아니라, 사용자 발화/모델 응답/턴 완료 시점을 분리해 상태 기반으로 처리함으로써 UI와 데이터 저장 타이밍이 어긋나지 않도록 설계했습니다.
+
+### 3) "진동현 지원자"를 더 잘 이해시키기 위한 페르소나 주입
+
+- 답변 톤(1인칭, 한국어 중심), 답변 우선순위(경력기술서 기반 사실 우선), 금지 규칙(추측성 개인 정보 답변 제한)을 명시해 응답의 신뢰도를 높였습니다.
+- 이를 통해 단순 질의응답이 아니라, 사용자가 "진동현 지원자"의 경험과 강점을 대화로 더 깊이 파악할 수 있도록 설계했습니다.
+
+## 추후 고려 사항
+
+### 1) 사용자 음성 입력 STT 후 텍스트 교정 로직
+
+- 현재는 실시간성을 우선해 음성 인식 결과를 빠르게 응답 흐름으로 연결하는 데 집중했습니다.
+- 추후에는 STT 결과에 대해 문맥 기반 텍스트 교정(오인식 보정, 띄어쓰기/도메인 용어 보정)을 추가해 응답 정확도를 높일 계획입니다.
+- 특히 비즈니스 관점에서 운영 시간을 보수적으로 가져갈 수 있다면, 교정 단계를 넣어 사용자 만족도와 응답 신뢰도를 함께 높이는 전략이 유효하다고 판단했습니다.
+
+### 2) 질문 트리거 기반을 넘어선 선제적 대화
+
+- 현재 구조는 사용자의 명시적 질문 트리거가 발생해야 응답이 시작되는 방식입니다.
+- 아이디어 관점에서, 외부 동적 데이터나 상태를 폴링/리스닝해 맥락을 파악한 뒤 사용자가 먼저 묻지 않아도 AI가 선제적으로 말을 거는 플로우를 고려할 수 있습니다.
+- 예시: AI 러닝코치처럼 사용자의 페이스를 지속적으로 관찰해, "내 페이스 어때?"라고 묻지 않아도 적절한 타이밍에 먼저 피드백을 제공하는 형태입니다.
+
+## 고민 포인트
+
+- 초기에는 실시간 소통 방식의 경험이 없다보니 충분히 이해하지 못해 `STT -> 분석 -> TTS` 스탭을 나눠 처리하는 파이프라인으로 먼저 구현했습니다.
+- 이후 이상하다 싶어서 개념을 이해하고 Live 기반 실시간 구조로 재설계/재개발을 진행했습니다.
+- 개발 과정에서 사용자 요청 음성이 외국어로 전사되는 이슈를 확인했고, 원인을 분석해 언어 고정 관련 필드(`ko-KR`)를 적용해 안정화했습니다.
+- AI 응답이 지지직 거리거나 끊겨 들리는 문제가 있었습니다.
+ - 즉시 반영을 줄이고 완충 구간을 두어 말의 흐름이 끊기지 않도록 개선했습니다.
+ - 오디오 처리를 Worklet로 분리해 실시간 처리 안정성과 연속성을 개선했습니다.
