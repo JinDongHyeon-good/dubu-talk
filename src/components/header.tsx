@@ -74,15 +74,21 @@ export default function Header() {
     };
   }, []);
 
-  if (pathname !== "/") return null;
+  const showOnHomeOrChat = pathname === "/" || pathname.startsWith("/chat/");
+  if (!showOnHomeOrChat) return null;
 
   const avatarUrl = getAvatarUrl(user);
 
   const onLogout = async () => {
     setIsLoggingOut(true);
     setIsMenuOpen(false);
-    await supabase.auth.signOut();
-    setIsLoggingOut(false);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setUser(null);
+      setIsLoggingOut(false);
+      window.location.replace("/login");
+    }
   };
 
   return (
@@ -112,14 +118,6 @@ export default function Header() {
             }`}
             role="menu"
           >
-            <Link
-              href="/chat-history"
-              onClick={() => setIsMenuOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-              role="menuitem"
-            >
-              채팅내역
-            </Link>
             <button
               type="button"
               onClick={onLogout}
