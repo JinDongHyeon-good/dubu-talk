@@ -16,7 +16,7 @@ pnpm dev
 http://localhost:3000
 ```
 
-.env.local 파일은 메일에 참조하여 회신하였습니다.
+.env.example 파일을 .env.local로 이름 변경 후 메일에 공유드린 값으로 복사 붙여넣기 부탁드리겠습니다.
 
 ## 주요 기술 스택
 
