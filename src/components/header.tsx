@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -104,7 +105,13 @@ export default function Header() {
             aria-label="사용자 메뉴 열기"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="구글 프로필 이미지" className="h-full w-full object-cover" />
+              <Image
+                src={avatarUrl}
+                alt="구글 프로필 이미지"
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="text-sm font-semibold text-slate-600">{user.email?.[0]?.toUpperCase() ?? "U"}</span>
             )}

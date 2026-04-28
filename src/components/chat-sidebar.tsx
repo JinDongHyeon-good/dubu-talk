@@ -27,13 +27,10 @@ function StreamingText({
   text: string;
   animate: boolean;
 }) {
-  const [displayed, setDisplayed] = useState(animate ? "" : text);
+  const [displayed, setDisplayed] = useState("");
 
   useEffect(() => {
-    if (!animate) {
-      setDisplayed(text);
-      return;
-    }
+    if (!animate) return;
 
     let cancelled = false;
     const target = text;
@@ -54,7 +51,7 @@ function StreamingText({
     };
   }, [animate, text]);
 
-  return <>{displayed}</>;
+  return <>{animate ? displayed : text}</>;
 }
 
 function mergeChunkText(previous: string, incoming: string) {

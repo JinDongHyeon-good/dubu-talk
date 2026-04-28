@@ -63,6 +63,11 @@ type SpaceSphereProps = {
 
 export default function SpaceSphere({ onReady }: SpaceSphereProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const onReadyRef = useRef(onReady);
+
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -161,7 +166,7 @@ export default function SpaceSphere({ onReady }: SpaceSphereProps) {
     const startedAt = performance.now();
     renderer.render(scene, camera);
     mount.style.visibility = "visible";
-    onReady?.();
+    onReadyRef.current?.();
     const animate = () => {
       frame = requestAnimationFrame(animate);
       const elapsed = (performance.now() - startedAt) / 1000;
