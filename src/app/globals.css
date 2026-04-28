@@ -93,7 +93,9 @@ a,
 .space-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 185, 92, 0.12) 0%, rgba(6, 11, 29, 0) 55%);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(42, 185, 148, 0.2) 0%, rgba(6, 11, 29, 0) 52%),
+    radial-gradient(circle at 50% 58%, rgba(14, 120, 98, 0.12) 0%, rgba(6, 11, 29, 0) 64%);
   mix-blend-mode: screen;
   pointer-events: none;
 }
