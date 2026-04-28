@@ -36,11 +36,15 @@ export default function ChatRoomListSidebar({ optimisticRoom }: { optimisticRoom
   }, [pathname]);
 
   const effectiveOptimisticRoom = optimisticRoom ?? localOptimisticRoom;
+  const shouldShowOptimisticRoom =
+    Boolean(effectiveOptimisticRoom?.roomId) &&
+    Boolean(effectiveOptimisticRoom?.question?.trim()) &&
+    effectiveOptimisticRoom?.question !== "실시간 대화 시작";
 
   const displayedRooms = useMemo(() => {
     let merged = rooms;
 
-    if (effectiveOptimisticRoom && !merged.some((room) => room.roomId === effectiveOptimisticRoom.roomId)) {
+    if (shouldShowOptimisticRoom && effectiveOptimisticRoom && !merged.some((room) => room.roomId === effectiveOptimisticRoom.roomId)) {
       merged = [
         {
           roomId: effectiveOptimisticRoom.roomId,
@@ -52,7 +56,7 @@ export default function ChatRoomListSidebar({ optimisticRoom }: { optimisticRoom
     }
 
     return merged;
-  }, [rooms, effectiveOptimisticRoom]);
+  }, [rooms, effectiveOptimisticRoom, shouldShowOptimisticRoom]);
 
   const fetchRooms = useCallback(async () => {
     const response = await fetch("/api/chat/rooms");

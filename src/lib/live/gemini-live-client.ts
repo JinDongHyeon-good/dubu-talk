@@ -3,6 +3,7 @@ import type { LiveSessionCallbacks, LiveSessionTokenResponse, LiveState, LiveTra
 const LIVE_DEBUG = false;
 const OUTPUT_SAMPLE_RATE = 24000;
 const JITTER_BUFFER_TARGET_MS = 140;
+const LIVE_LANGUAGE_CODE = "ko-KR";
 
 function liveLog(message: string, ...args: unknown[]) {
   void message;
@@ -193,7 +194,12 @@ export class GeminiLiveClient {
         model: `models/${model}`,
         generationConfig: {
           responseModalities: ["AUDIO"],
+          speechConfig: {
+            languageCode: LIVE_LANGUAGE_CODE,
+          },
         },
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
         ...(typeof systemInstruction === "string" && systemInstruction.trim().length > 0
           ? { systemInstruction: { parts: [{ text: systemInstruction }] } }
           : {}),
