@@ -1,4 +1,22 @@
 
+## 로컬 실행환경 준비
+
+1. Node.js 설치 (권장: LTS, v20 이상)
+```bash
+node -v
+```
+
+2. pnpm 활성화 (Corepack 사용)
+```bash
+corepack enable
+corepack prepare pnpm@latest --activate
+pnpm -v
+```
+
+3. 환경변수 파일 준비
+- `.env.example` 파일을 `.env.local`로 복사합니다.
+- 메일로 공유드린 값을 `.env.local`에 입력합니다.
+
 ## 프로젝트 실행방법
 
 1. 의존성 설치
@@ -15,8 +33,6 @@ pnpm dev
 ```text
 http://localhost:3000
 ```
-
-.env.example 파일을 .env.local로 이름 변경 후 메일에 공유드린 값으로 복사 붙여넣기 부탁드리겠습니다.
 
 ## 주요 기술 스택
 
