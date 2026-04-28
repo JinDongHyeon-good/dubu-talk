@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="38a306e8-a8b5-4797-9e56-cce98051a199" name="변경" comment="create next app + pnpm setting" />
+    <list default="true" id="38a306e8-a8b5-4797-9e56-cce98051a199" name="변경" comment="모델 통신 + 채팅내용 저장 API 개발">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/persona-bubble.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/persona-bubble.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/space-sphere.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/space-sphere.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,12 +24,12 @@
     &quot;assignee&quot;: &quot;JinDongHyeon-good&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/JinDongHyeon-good/dubu-talk.git",
-    "accountId": "f87b3245-ecf7-4264-80ad-b4288b85a7aa"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/JinDongHyeon-good/dubu-talk.git&quot;,
+    &quot;accountId&quot;: &quot;f87b3245-ecf7-4264-80ad-b4288b85a7aa&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -45,6 +50,7 @@
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/jindonghyeon/Documents/workspace/dubu-talk/node_modules/typescript/lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -67,6 +73,9 @@
       <workItem from="1777109160597" duration="653000" />
       <workItem from="1777109822356" duration="544000" />
       <workItem from="1777110369720" duration="700000" />
+      <workItem from="1777111102647" duration="7984000" />
+      <workItem from="1777277891597" duration="2244000" />
+      <workItem from="1777342277020" duration="4720000" />
     </task>
     <task id="LOCAL-00001" summary="create next app + pnpm setting">
       <option name="closed" value="true" />
@@ -84,7 +93,95 @@
       <option name="project" value="LOCAL" />
       <updated>1777111053580</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="loot layout, /, /login 페이지 틀 생성">
+      <option name="closed" value="true" />
+      <created>1777114307985</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1777114307985</updated>
+    </task>
+    <task id="LOCAL-00004" summary="supabase 패키지 설치&#10;구글 가입 및 로그인처리">
+      <option name="closed" value="true" />
+      <created>1777123437189</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1777123437189</updated>
+    </task>
+    <task id="LOCAL-00005" summary="글로벌css 추가&#10;미들웨어 추가&#10;&#10;헤더 컴포넌트 추가">
+      <option name="closed" value="true" />
+      <created>1777123945977</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1777123945977</updated>
+    </task>
+    <task id="LOCAL-00006" summary="three js 패키지 설치&#10;sonner 패키지 설치&#10;/ 페이지 화면 구성 및 디자인 작업">
+      <option name="closed" value="true" />
+      <created>1777127081032</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1777127081032</updated>
+    </task>
+    <task id="LOCAL-00007" summary="슈퍼베이스 세션 확인로직 추가">
+      <option name="closed" value="true" />
+      <created>1777280318135</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1777280318135</updated>
+    </task>
+    <task id="LOCAL-00008" summary="좌측 채팅내역 컴포넌트 개발">
+      <option name="closed" value="true" />
+      <created>1777349382787</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349382787</updated>
+    </task>
+    <task id="LOCAL-00009" summary="헤더 채팅내역 버튼제거">
+      <option name="closed" value="true" />
+      <created>1777349412352</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349412352</updated>
+    </task>
+    <task id="LOCAL-00010" summary="구체 디자인 수정">
+      <option name="closed" value="true" />
+      <created>1777349433879</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349433879</updated>
+    </task>
+    <task id="LOCAL-00011" summary="우측 채팅창 컴포넌트 개발">
+      <option name="closed" value="true" />
+      <created>1777349457203</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349457203</updated>
+    </task>
+    <task id="LOCAL-00012" summary="채팅 페이지 개발">
+      <option name="closed" value="true" />
+      <created>1777349470176</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349470176</updated>
+    </task>
+    <task id="LOCAL-00013" summary="모델 통신 + 채팅내용 저장 API 개발">
+      <option name="closed" value="true" />
+      <created>1777349792071</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1777349792071</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -103,6 +200,17 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="create next app + pnpm setting" />
-    <option name="LAST_COMMIT_MESSAGE" value="create next app + pnpm setting" />
+    <MESSAGE value="loot layout, /, /login 페이지 틀 생성" />
+    <MESSAGE value="supabase 패키지 설치&#10;구글 가입 및 로그인처리" />
+    <MESSAGE value="글로벌css 추가&#10;미들웨어 추가&#10;&#10;헤더 컴포넌트 추가" />
+    <MESSAGE value="three js 패키지 설치&#10;sonner 패키지 설치&#10;/ 페이지 화면 구성 및 디자인 작업" />
+    <MESSAGE value="슈퍼베이스 세션 확인로직 추가" />
+    <MESSAGE value="좌측 채팅내역 컴포넌트 개발" />
+    <MESSAGE value="헤더 채팅내역 버튼제거" />
+    <MESSAGE value="구체 디자인 수정" />
+    <MESSAGE value="우측 채팅창 컴포넌트 개발" />
+    <MESSAGE value="채팅 페이지 개발" />
+    <MESSAGE value="모델 통신 + 채팅내용 저장 API 개발" />
+    <option name="LAST_COMMIT_MESSAGE" value="모델 통신 + 채팅내용 저장 API 개발" />
   </component>
 </project>
