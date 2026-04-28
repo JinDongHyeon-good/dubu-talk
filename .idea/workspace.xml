@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="38a306e8-a8b5-4797-9e56-cce98051a199" name="변경" comment="프롬프트 수정">
+    <list default="true" id="38a306e8-a8b5-4797-9e56-cce98051a199" name="변경" comment="readme 작성">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/voice/route.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/chat-sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/chat-sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/persona-bubble.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/persona-bubble.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,6 +74,7 @@
       <workItem from="1777111102647" duration="7984000" />
       <workItem from="1777277891597" duration="2244000" />
       <workItem from="1777342277020" duration="11982000" />
+      <workItem from="1777364407914" duration="134000" />
     </task>
     <task id="LOCAL-00001" summary="create next app + pnpm setting">
       <option name="closed" value="true" />
@@ -222,7 +220,31 @@
       <option name="project" value="LOCAL" />
       <updated>1777358498431</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="구글 외부 이미지 도메인 추가">
+      <option name="closed" value="true" />
+      <created>1777362928375</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1777362928375</updated>
+    </task>
+    <task id="LOCAL-00020" summary="한국어 언어고정">
+      <option name="closed" value="true" />
+      <created>1777363509261</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1777363509261</updated>
+    </task>
+    <task id="LOCAL-00021" summary="readme 작성">
+      <option name="closed" value="true" />
+      <created>1777364200210</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1777364200210</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -257,6 +279,9 @@
     <MESSAGE value="@google/genai install" />
     <MESSAGE value="구체 인터렉션 추가" />
     <MESSAGE value="프롬프트 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="프롬프트 수정" />
+    <MESSAGE value="구글 외부 이미지 도메인 추가" />
+    <MESSAGE value="한국어 언어고정" />
+    <MESSAGE value="readme 작성" />
+    <option name="LAST_COMMIT_MESSAGE" value="readme 작성" />
   </component>
 </project>
